@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
 
     private DecimalFormat df = new DecimalFormat("#.##########");
     private String sCurrentOperator = "", sPreviousOperator = "", sHistory = "", sCurrentNumber = "", sPreviousNumber = "", sTotal = "", sLastIndex = "";
+    private String lastTempNumber, lastTempOperator;
     private double dTotal = 0;
 
     private int iHistoryCount = 0;
@@ -38,18 +39,41 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        boolean isNonNumber = getValue.equals("+") || getValue.equals("-") || getValue.equals("*") || getValue.equals("/") || getValue.equals("=");
-        if (isNonNumber) {
+        boolean isOperator = getValue.equals("+") || getValue.equals("-") || getValue.equals("*") || getValue.equals("/");
+        boolean isEqual = getValue.equals("=");
+        if (isEqual) {
+            iHistoryCount++;
+
+            if (sLastIndex.equals("=")) {
+                sPreviousNumber = lastTempNumber;
+            } else {
+                sPreviousNumber = editTextOutput.getText().toString();
+                lastTempNumber = sPreviousNumber;
+            }
+            Log.i(TAG, "sLastIndex: " + sLastIndex + " sPreviousNumber: " + sPreviousNumber + " sPreviousOperator: " + sPreviousOperator);
+            computeNumber();
+            editTextInfo.setText("");
+
+            sLastIndex = "=";
+        }
+        else if (isOperator) {
             if (sCurrentNumber.equals("")) return;
-            if (!sLastIndex.equals("")) {
+            if (!sLastIndex.equals("") && !sLastIndex.equals("=")) {
                 return;
             }
-            if (!getValue.equals("=")) {
-                sCurrentOperator = getValue;
-                sPreviousNumber = sCurrentNumber;
-                sHistory += sPreviousNumber + sCurrentOperator;
-                if (sPreviousOperator.equals("")) sPreviousOperator = sCurrentOperator;
+
+            if (sLastIndex.equals("=")) {
+                iHistoryCount = 0;
+                sHistory = "";
+                sCurrentNumber = editTextOutput.getText().toString();
+                //editTextInfo.setText(sCurrentNumber);
             }
+
+            sCurrentOperator = getValue;
+            sPreviousNumber = sCurrentNumber;
+            sHistory += sPreviousNumber + sCurrentOperator;
+            if (sPreviousOperator.equals("")) sPreviousOperator = sCurrentOperator;
+
             iHistoryCount++;
             switch (getValue) {
                 case "+":
@@ -67,21 +91,12 @@ public class MainActivity extends AppCompatActivity {
                     computeNumber();
                     //editTextInfo.setText(sHistory);
                     break;
-                case "=":
-                    if (sLastIndex.equals("")) {
-                        sPreviousNumber = editTextOutput.getText().toString();
-                        Log.i(TAG, "sLastIndex: " + sLastIndex + " sPreviousNumber: " + sPreviousNumber);
-                    }
-                    computeNumber();
-                    editTextInfo.setText("");
-                    break;
             }
             sPreviousOperator = sCurrentOperator;
             sCurrentOperator = "";
             sCurrentNumber = "";
-            if (!getValue.equals("=")) {
-                sLastIndex = getValue;
-            }
+
+            sLastIndex = getValue;
         } else {
             if (sCurrentNumber.contains(".") && getValue.equals(".")) return;
             if (getValue.equals(".") && sCurrentNumber.equals("")) {
@@ -105,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
         sLastIndex = "";
         dTotal = 0;
         iHistoryCount = 0;
+        lastTempNumber = "";
+        lastTempOperator = "";
     }
 
     private void clearEqual() {
